@@ -12,14 +12,6 @@ export default async function AnalyticsPage() {
     redirect('/auth/login')
   }
 
-  // Get unique exercises the user has logged
-  const { data: userExercises } = await supabase
-    .from('session_exercises')
-    .select(`
-      exercise:exercises (id, name)
-    `)
-    .eq('session_id', supabase.from('sessions').select('id').eq('user_id', user.id))
-
   // Get unique exercises from sessions
   const { data: sessions } = await supabase
     .from('sessions')
@@ -38,34 +30,37 @@ export default async function AnalyticsPage() {
   // Build exercise map with progress data
   const exerciseMap = new Map<string, { id: string; name: string; data: Array<{ date: string; best1rm: number; bestWeight: number; totalVolume: number }> }>()
 
-  sessions?.forEach(session => {
-    session.session_exercises?.forEach((se: {
-      exercise: { id: string; name: string } | null
-      sets: Array<{ weight: number | null; reps: number | null; est_1rm: number | null }>
-    }) => {
-      if (!se.exercise) return
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sessions?.forEach((session: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    session.session_exercises?.forEach((se: any) => {
+      const exercise = se.exercise
+      if (!exercise) return
 
-      const exerciseId = se.exercise.id
+      const exerciseId = exercise.id
       if (!exerciseMap.has(exerciseId)) {
         exerciseMap.set(exerciseId, {
           id: exerciseId,
-          name: se.exercise.name,
+          name: exercise.name,
           data: []
         })
       }
 
-      const exercise = exerciseMap.get(exerciseId)!
+      const exerciseData = exerciseMap.get(exerciseId)!
       
-      const best1rm = se.sets?.reduce((max: number, set: { est_1rm: number | null }) => 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const best1rm = se.sets?.reduce((max: number, set: any) => 
         Math.max(max, set.est_1rm || 0), 0) || 0
       
-      const bestWeight = se.sets?.reduce((max: number, set: { weight: number | null }) => 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const bestWeight = se.sets?.reduce((max: number, set: any) => 
         Math.max(max, set.weight || 0), 0) || 0
 
-      const totalVolume = se.sets?.reduce((sum: number, set: { weight: number | null; reps: number | null }) => 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const totalVolume = se.sets?.reduce((sum: number, set: any) => 
         sum + ((set.weight || 0) * (set.reps || 0)), 0) || 0
 
-      exercise.data.push({
+      exerciseData.data.push({
         date: session.date,
         best1rm,
         bestWeight,
@@ -118,4 +113,3 @@ export default async function AnalyticsPage() {
     </div>
   )
 }
-
