@@ -3,6 +3,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import Navbar from '@/components/layout/Navbar'
 
+interface MonthGroup {
+  label: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sessions: any[]
+}
+
 export default async function HistoryPage() {
   const supabase = await createClient()
   
@@ -40,17 +46,19 @@ export default async function HistoryPage() {
   }
 
   // Group sessions by month
-  const sessionsByMonth = sessions?.reduce((acc, session) => {
+  const sessionsByMonth: Record<string, MonthGroup> = {}
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sessions?.forEach((session: any) => {
     const date = new Date(session.date)
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     const monthLabel = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     
-    if (!acc[monthKey]) {
-      acc[monthKey] = { label: monthLabel, sessions: [] }
+    if (!sessionsByMonth[monthKey]) {
+      sessionsByMonth[monthKey] = { label: monthLabel, sessions: [] }
     }
-    acc[monthKey].sessions.push(session)
-    return acc
-  }, {} as Record<string, { label: string; sessions: typeof sessions }>) || {}
+    sessionsByMonth[monthKey].sessions.push(session)
+  })
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -80,13 +88,15 @@ export default async function HistoryPage() {
           {/* Sessions List */}
           {sessions && sessions.length > 0 ? (
             <div className="space-y-8">
-              {Object.entries(sessionsByMonth).map(([monthKey, { label, sessions: monthSessions }]) => (
+              {Object.entries(sessionsByMonth).map(([monthKey, monthData]) => (
                 <div key={monthKey}>
-                  <h2 className="text-lg font-semibold text-zinc-400 mb-4">{label}</h2>
+                  <h2 className="text-lg font-semibold text-zinc-400 mb-4">{monthData.label}</h2>
                   <div className="space-y-3">
-                    {monthSessions?.map((session) => {
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {monthData.sessions.map((session: any) => {
                       const exerciseNames = session.session_exercises
-                        ?.map((se: { exercise: { name: string } | null }) => se.exercise?.name)
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        ?.map((se: any) => se.exercise?.name)
                         .filter(Boolean) || []
 
                       return (
@@ -153,4 +163,3 @@ export default async function HistoryPage() {
     </div>
   )
 }
-

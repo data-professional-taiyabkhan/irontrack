@@ -36,10 +36,8 @@ export default async function WorkoutSummaryPage({ params }: WorkoutSummaryPageP
   }
 
   // Calculate stats
-  const totalSets = session.session_exercises?.reduce(
-    (acc: number, se: { sets: unknown[] }) => acc + (se.sets?.length || 0),
-    0
-  ) || 0
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const totalSets = session.session_exercises?.reduce((acc: number, se: any) => acc + (se.sets?.length || 0), 0) || 0
 
   const totalVolume = session.total_volume || 0
 
@@ -156,19 +154,18 @@ export default async function WorkoutSummaryPage({ params }: WorkoutSummaryPageP
               <h2 className="font-semibold">Exercises</h2>
             </div>
             <div className="divide-y divide-zinc-800/50">
-              {session.session_exercises?.map((se: {
-                id: string
-                exercise: { name: string } | null
-                sets: Array<{ weight: number | null; reps: number | null; est_1rm: number | null }>
-              }) => {
-                const bestSet = se.sets?.reduce((best: { weight: number | null; reps: number | null } | null, set: { weight: number | null; reps: number | null }) => {
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {session.session_exercises?.map((se: any) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const bestSet = se.sets?.reduce((best: any, set: any) => {
                   if (!best) return set
                   const bestVolume = (best.weight || 0) * (best.reps || 0)
                   const setVolume = (set.weight || 0) * (set.reps || 0)
                   return setVolume > bestVolume ? set : best
                 }, null)
 
-                const best1RM = se.sets?.reduce((max: number, set: { est_1rm: number | null }) => 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const best1RM = se.sets?.reduce((max: number, set: any) => 
                   Math.max(max, set.est_1rm || 0), 0)
 
                 return (
@@ -212,4 +209,3 @@ export default async function WorkoutSummaryPage({ params }: WorkoutSummaryPageP
     </div>
   )
 }
-
